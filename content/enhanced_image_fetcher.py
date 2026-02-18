@@ -95,6 +95,40 @@ class EnhancedImageFetcher:
         except Exception as e:
             return False
     
+    def get_image_attribution(self, image: Dict) -> str:
+        """이미지 출처 정보 생성"""
+        source = image.get("source", "unknown")
+        photographer = image.get("photographer", "Unknown")
+        
+        if source == "unsplash":
+            photographer_url = image.get("photographer_url", "")
+            unsplash_url = image.get("unsplash_url", "")
+            if photographer_url and unsplash_url:
+                return f"Photo by [{photographer}]({photographer_url}) on [Unsplash]({unsplash_url})"
+            return f"Photo by {photographer} on Unsplash"
+        
+        elif source == "pexels":
+            photographer_url = image.get("photographer_url", "")
+            if photographer_url:
+                return f"Photo by [{photographer}]({photographer_url}) on [Pexels](https://www.pexels.com)"
+            return f"Photo by {photographer} on Pexels"
+        
+        elif source == "pixabay":
+            return f"Photo by {photographer} on [Pixabay](https://pixabay.com)"
+        
+        elif source in ["pexels_static", "static"]:
+            return f"Photo from Pexels (Free to use)"
+        
+        return f"Photo source: {source}"
+    
+    def get_all_attributions(self, images: List[Dict]) -> str:
+        """모든 이미지의 출처 정보를 하나의 문자열로 반환"""
+        attributions = []
+        for i, img in enumerate(images, 1):
+            attr = self.get_image_attribution(img)
+            attributions.append(f"{i}. {attr}")
+        return "\n".join(attributions)
+    
     def _get_unsplash_images(self, query: str, count: int = 6) -> List[Dict]:
         """Unsplash API로 이미지 가져오기 (우선 순위 1)"""
         if not self.unsplash_key:

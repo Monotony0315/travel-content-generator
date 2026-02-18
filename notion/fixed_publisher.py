@@ -478,6 +478,42 @@ class FixedNotionPublisher:
                 elif link and isinstance(link, str):
                     blocks.append(self._paragraph(f"• {link}"))
         
+        # Image Attributions
+        blocks.append(self._divider())
+        blocks.append(self._heading(2, "📷 이미지 출처"))
+        blocks.append(self._paragraph("본 여행 가이드에 사용된 이미지는 다음 출처에서 제공되었습니다. 각 이미지는 해당 플랫폼의 라이선스에 따라 사용되었습니다."))
+        
+        # 이미지 출처 정보 추가
+        if images:
+            for i, img in enumerate(images, 1):
+                source = img.get("source", "unknown")
+                photographer = img.get("photographer", "Unknown")
+                
+                if source == "unsplash":
+                    photographer_url = img.get("photographer_url", "")
+                    unsplash_url = img.get("unsplash_url", "")
+                    if photographer_url and unsplash_url:
+                        attr_text = f"[{i}] Photo by [{photographer}]({photographer_url}) on [Unsplash]({unsplash_url})"
+                    else:
+                        attr_text = f"[{i}] Photo by {photographer} on Unsplash"
+                elif source == "pexels":
+                    photographer_url = img.get("photographer_url", "")
+                    if photographer_url:
+                        attr_text = f"[{i}] Photo by [{photographer}]({photographer_url}) on [Pexels](https://www.pexels.com)"
+                    else:
+                        attr_text = f"[{i}] Photo by {photographer} on Pexels"
+                elif source == "pixabay":
+                    attr_text = f"[{i}] Photo by {photographer} on [Pixabay](https://pixabay.com)"
+                elif source in ["pexels_static", "static"]:
+                    attr_text = f"[{i}] Photo from Pexels (CC0 License)"
+                else:
+                    attr_text = f"[{i}] Photo source: {source}"
+                
+                blocks.append(self._paragraph(attr_text, link=img.get("url", "")))
+        
+        blocks.append(self._paragraph(""))
+        blocks.append(self._paragraph("**라이선스 안내:**\n• Unsplash: Unsplash License (Free to use, attribution appreciated)\n• Pexels: Pexels License (Free to use, no attribution required)\n• Pixabay: Pixabay License (Free to use, no attribution required)"))
+        
         # Footer
         blocks.append(self._divider())
         blocks.append(self._paragraph(f"작성일: {content.get('generated_at', datetime.now().isoformat())[:10]}"))
