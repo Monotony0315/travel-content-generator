@@ -291,6 +291,7 @@ class RichCityGenerator:
             },
             "intro": self._generate_intro(city, country, region),
             "hotels": hotels,
+            "restaurants": restaurants,
             "days_plan": days_plan,
             "parking_info": parking_info,
             "transport_summary": transport_summary,
@@ -1059,10 +1060,20 @@ CITY_DATABASE = {
             {"name": "Jewish Quarter (요세포프)", "desc": "유럽에서 가장 잘 보존된 유대인 거리. 구 유대교 회당과 묘지가 있어요. 프란츠 카프카가 태어난 곳이기도 해요.", "tip": "통합 입장권 350코루나, 금요일 일찍 문 닫음", "time": "오전 10:00-12:00", "reservation_required": False},
         ],
         "restaurants": [
-            {"name": "Lokál Dlouhá", "type": "체코 전통", "price": "200-400코루나", "tip": "현지인이 가장 많이 찾는 체코 전통 레스토랑. 꼴레노(돼지 무릎 구이)와 탱크 필스너가 시그니처. 가성비가 미쳤어요.", "reservation_required": True},
-            {"name": "Café Louvre", "type": "카페/브런치", "price": "200-350코루나", "tip": "아인슈타인과 카프카가 다녔던 역사적 카페. 1902년부터 영업 중. 케이크와 커피 세트 추천.", "reservation_required": False},
-            {"name": "Naše Maso", "type": "정육점/샌드위치", "price": "100-200코루나", "tip": "프라하 최고의 정육점 겸 샌드위치 가게. 타르타르(생고기)와 소시지가 유명. 작은 가게라 테이크아웃 추천.", "reservation_required": False},
-            {"name": "Eska", "type": "모던 체코 요리", "price": "400-600코루나", "tip": "현대적으로 재해석한 체코 요리. 자체 베이커리와 발효 연구소가 있어요. 런치 메뉴가 가성비 좋음.", "reservation_required": True},
+            # 💚 가성비
+            {"name": "Lokál Dlouhááá", "type": "체코 전통/맥주", "price": "200-400 Kč", "price_tier": "budget", "tip": "현지인이 가장 많이 찾는 체코 전통 펍. 꼼레노(돼지 무릎 구이)와 탱크 필스너 우르켈이 시그니처.", "reservation_required": False},
+            {"name": "Naše Maso", "type": "정육점/샌드위치", "price": "100-250 Kč", "price_tier": "budget", "tip": "프라하 최고의 정육점 겸 샌드위치 가게. 타르타르(생고기)와 수제 소시지가 유명. 테이크아웃 추천.", "reservation_required": False},
+            {"name": "Kozlovna Apropos", "type": "체코 전통", "price": "180-350 Kč", "price_tier": "budget", "tip": "스베이크로바(돼지고기 구이)와 크네들리키가 정말 맛있어요. 체코 맥주 종류도 다양합니다.", "reservation_required": False},
+            {"name": "Café Louvre", "type": "카페/브런치", "price": "150-300 Kč", "price_tier": "budget", "tip": "아인슈타인과 카프카가 다녔던 1902년 역사 카페. 케이크와 커피 세트가 가성비 좋아요.", "reservation_required": False},
+            # 🧡 일반
+            {"name": "Eska", "type": "모던 체코/베이커리", "price": "400-700 Kč", "price_tier": "mid", "tip": "현대적으로 재해석한 체코 요리. 자체 베이커리와 발효 연구소가 있어요. 브런치 메뉴 추천.", "reservation_required": False},
+            {"name": "Mlejnice", "type": "체코 전통", "price": "350-600 Kč", "price_tier": "mid", "tip": "구시가지 한복판에 위치한 전통 레스토랑. 정겨운 분위기에서 든든한 체코 요리를 즐길 수 있어요.", "reservation_required": True},
+            {"name": "Coda Restaurant", "type": "모던 유럽", "price": "500-900 Kč", "price_tier": "mid", "tip": "프라하 성 근처. 체코 요리를 현대적으로 재해석한 메뉴. 테라스석에서 성 뷰가 환상적이에요.", "reservation_required": True, "reservation_url": "https://www.codarestaurant.cz/"},
+            {"name": "Kantýna", "type": "스테이크/정육점", "price": "400-800 Kč", "price_tier": "mid", "tip": "프라하 최고의 스테이크 맛집. 정육점과 레스토랑이 합쳐진 콘셉트. 드라이에이징 고기가 일품.", "reservation_required": False},
+            # 💜 고급
+            {"name": "La Degustation Bohême Bourgeoise", "type": "체코 파인다이닝", "price": "2500-4000 Kč", "price_tier": "luxury", "tip": "미슐랭 1스타. 19세기 체코 레시피를 현대적으로 재해석한 7코스 디너. 프라하 최고의 미식 경험.", "reservation_required": True, "reservation_url": "https://www.ladegustation.cz/"},
+            {"name": "Field Restaurant", "type": "모던 유럽/파인다이닝", "price": "1800-3500 Kč", "price_tier": "luxury", "tip": "미슐랭 가이드 선정. 계절별 코스 메뉴가 특징. 로컬 식재료에 집착하는 셰프의 철학이 느껴져요.", "reservation_required": True, "reservation_url": "https://www.fieldrestaurant.cz/"},
+            {"name": "Alcron Restaurant", "type": "씨푸드/파인다이닝", "price": "2000-4000 Kč", "price_tier": "luxury", "tip": "래디슨 블루 호텔 내 미슐랭 스타 레스토랑. 랍스터와 해산물이 시그니처. 특별한 날에 완벽해요.", "reservation_required": True, "reservation_url": "https://www.alcron.cz/"},
         ],
         "hotels": {
             "budget": [

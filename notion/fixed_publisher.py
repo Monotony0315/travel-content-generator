@@ -83,16 +83,12 @@ class FixedNotionPublisher:
         total_blocks = len(blocks)
         logger.info(f"Total blocks to publish: {total_blocks}")
         
-        if total_blocks > self.MAX_BLOCKS_PER_REQUEST:
-            logger.warning(f"Block count ({total_blocks}) exceeds limit ({self.MAX_BLOCKS_PER_REQUEST}). Truncating to fit.")
-            blocks = blocks[:self.MAX_BLOCKS_PER_REQUEST]
-        
-        # Add blocks in batches
-        batch_size = 90
+        # Notion API 는 한 번에 100블록 제한 → batch 로 나눠서 전부 추가
+        batch_size = 95
         for i in range(0, len(blocks), batch_size):
             batch = blocks[i:i + batch_size]
             self._request("PATCH", f"/blocks/{page_id}/children", {"children": batch})
-            logger.info(f"Added blocks {i+1} to {min(i+len(batch), len(blocks))} of {len(blocks)}")
+            logger.info(f"Added blocks {i+1} to {min(i+len(batch), total_blocks)} of {total_blocks}")
         
         return page_url
 
@@ -298,8 +294,8 @@ class FixedNotionPublisher:
         
         blocks.append(self._divider())
         
-        # DAILY ITINERARY
-        blocks.append(self._heading(2, "일정 상세"))
+        # DAILY ITINERARY — 여행 블로그 스타일
+        blocks.append(self._heading(2, "📅 일정 상세"))
         
         for idx, day in enumerate(content.get("days_plan", [])):
             day_num = day.get("day", idx + 1)
@@ -309,68 +305,137 @@ class FixedNotionPublisher:
                 blocks.append(self._image_external(images[day_num]["url"], f"Day {day_num}"))
             
             # Day header
-            blocks.append(self._callout(f"Day {day_num}: {day['title']}", "", "blue_background"))
+            blocks.append(self._callout(f"📌 Day {day_num}: {day['title']}", "", "blue_background"))
             
-            # Day content - 문단을 더 큰 덩어리로 묶기
+            # Day content — 서술형 소개 (최대 2문단)
             content_text = day.get("content", "").strip()
-            # 2-3문단씩 묶어서 하나의 블록으로
             paragraphs = [p.strip() for p in content_text.split('\n\n') if p.strip()]
+            for p in paragraphs[:2]:
+                blocks.append(self._paragraph(p))
             
-            # 첫 2문단은 따로, 나머지는 합쳐서 블록 수 줄이기
-            if paragraphs:
-                # 첫 문단
-                blocks.append(self._paragraph(paragraphs[0]))
-                # 나머지 문단들 (2-3개씩 합쳐서)
-                remaining = '\n\n'.join(paragraphs[1:])
-                if remaining:
-                    # 4000자씩 잘라서 여러 블록으로 (rich_text 여러 개 사용)
-                    chunks = self._split_long_text(remaining, 4000)
-                    for chunk in chunks:
-                        blocks.append(self._paragraph(chunk))
-            
-            # Spots - 간략화
+            # ─── 🗺️ 오늘의 코스 ───
             spots = day.get("spots", [])
             if spots:
-                blocks.append(self._heading(3, "주요 장소"))
-                for spot in spots:
+                blocks.append(self._heading(3, "🗺️ 오늘의 코스"))
+                for i, spot in enumerate(spots, 1):
                     name = spot['name']
                     desc = spot['desc']
+                    tip = spot.get('tip', '')
+                    time_str = spot.get('time', '')
                     maps_url = self._maps_url(f"{name} {city}")
-                    reservation_url = spot.get('reservation_url', '')
-                    reservation_required = spot.get('reservation_required', False)
+                    res_url = spot.get('reservation_url', '')
+                    res_req = spot.get('reservation_required', False)
                     
-                    # 한 줄로 압축 - 팁 제외
-                    spot_text = f"• **[{name}]({maps_url})**: {desc}"
-                    if reservation_required and reservation_url and reservation_url.startswith('http'):
-                        spot_text += f" | [🎫 예약하기]({reservation_url})"
-                    blocks.append(self._paragraph(spot_text))
+                    # 장소명 + 시간 (1줄)
+                    title_line = f"**{i}. [{name}]({maps_url})**"
+                    if time_str:
+                        title_line += f"  ⏰ {time_str}"
+                    blocks.append(self._paragraph(title_line))
+                    
+                    # 설명 + 팁 + 예약 (1줄로 합침)
+                    detail = desc
+                    if tip:
+                        detail += f" 💡 {tip}"
+                    if res_req and res_url and res_url.startswith('http'):
+                        detail += f" 🎫 [예약하기]({res_url})"
+                    blocks.append(self._paragraph(detail))
             
-            # Restaurants - 간략화
+            # ─── 🍽️ 오늘의 맛집 (하루 2-3개 추천) ───
             restaurants = day.get("restaurants", [])
             if restaurants:
-                blocks.append(self._heading(3, "추천 식당"))
-                for r in restaurants:
-                    name = r['name']
-                    price = r.get('price', '')
-                    tip = r.get('tip', '')
-                    maps_url = self._maps_url(f"{name} {city}")
-                    reservation_url = r.get('reservation_url', '')
-                    reservation_required = r.get('reservation_required', False)
+                blocks.append(self._heading(3, "🍽️ 오늘의 맛집"))
+                
+                # price_tier 기반 분류
+                budget_r = [r for r in restaurants if r.get('price_tier') == 'budget']
+                mid_r = [r for r in restaurants if r.get('price_tier') == 'mid']
+                luxury_r = [r for r in restaurants if r.get('price_tier') == 'luxury']
+                no_tier = [r for r in restaurants if 'price_tier' not in r]
+                if no_tier and not budget_r and not mid_r and not luxury_r:
+                    mid_r = no_tier
+                
+                # 각 tier에서 day_num 기준으로 돌아가며 1개씩 선택
+                day_picks = []
+                if budget_r:
+                    day_picks.append(("💚", budget_r[(day_num - 1) % len(budget_r)]))
+                if mid_r:
+                    day_picks.append(("🧡", mid_r[(day_num - 1) % len(mid_r)]))
+                if luxury_r:
+                    day_picks.append(("💜", luxury_r[(day_num - 1) % len(luxury_r)]))
+                
+                for emoji, r in day_picks:
+                    r_name = r['name']
+                    r_price = r.get('price', '')
+                    r_type = r.get('type', '')
+                    r_tip = r.get('tip', '')
+                    r_maps = self._maps_url(f"{r_name} {city}")
+                    r_res_url = r.get('reservation_url', '')
+                    r_res_req = r.get('reservation_required', False)
                     
-                    rest_text = f"• **[{name}]({maps_url})** ({price}): {tip}"
-                    if reservation_required and reservation_url and reservation_url.startswith('http'):
-                        rest_text += f" | [🎫 예약]({reservation_url})"
-                    blocks.append(self._paragraph(rest_text))
+                    r_line = f"{emoji} **[{r_name}]({r_maps})**  {r_type} · {r_price}"
+                    blocks.append(self._paragraph(r_line))
+                    
+                    r_detail = ""
+                    if r_tip:
+                        r_detail = f"→ {r_tip}"
+                    if r_res_req and r_res_url and r_res_url.startswith('http'):
+                        r_detail += f" 🎫 [예약하기]({r_res_url})"
+                    if r_detail:
+                        blocks.append(self._paragraph(r_detail))
             
-            # Daily cost
+            # ─── 💰 오늘의 예상 비용 ───
             cost = day.get("estimated_cost", {})
             if cost:
-                blocks.append(self._callout(f"💰 {cost.get('total', '')}", "", "yellow_background"))
+                cost_parts = []
+                if cost.get('transport'):
+                    cost_parts.append(f"교통 {cost['transport']}")
+                if cost.get('food'):
+                    cost_parts.append(f"식사 {cost['food']}")
+                if cost.get('activities'):
+                    cost_parts.append(f"입장료 {cost['activities']}")
+                detail = " · ".join(cost_parts)
+                if detail:
+                    blocks.append(self._paragraph(detail))
+                blocks.append(self._callout(f"💰 합계: {cost.get('total', '')}", "", "yellow_background"))
             
-            # 100블록 근접시 중단
-            if len(blocks) >= 90:
-                blocks.append(self._callout("⚠️ 이후 내용은 다음 페이지에서 확인하세요.", "", "red_background"))
-                break
+            blocks.append(self._divider())
+        
+        # ─── 🍽️ 전체 맛집 가이드 (가성비 / 일반 / 고급) ───
+        all_restaurants = content.get("restaurants", [])
+        if all_restaurants:
+            blocks.append(self._heading(2, "🍽️ 전체 맛집 가이드"))
+            
+            budget_all = [r for r in all_restaurants if r.get('price_tier') == 'budget']
+            mid_all = [r for r in all_restaurants if r.get('price_tier') == 'mid']
+            luxury_all = [r for r in all_restaurants if r.get('price_tier') == 'luxury']
+            no_tier_all = [r for r in all_restaurants if 'price_tier' not in r]
+            if no_tier_all and not budget_all and not mid_all and not luxury_all:
+                mid_all = no_tier_all
+            
+            for tier_label, tier_list, tier_color in [
+                ("💚 가성비 맛집", budget_all, "green_background"),
+                ("🧡 분위기 좋은 맛집", mid_all, "orange_background"),
+                ("💜 특별한 날 · 파인다이닝", luxury_all, "purple_background"),
+            ]:
+                if not tier_list:
+                    continue
+                blocks.append(self._callout(tier_label, "", tier_color))
+                for r in tier_list:
+                    r_name = r['name']
+                    r_price = r.get('price', '')
+                    r_type = r.get('type', '')
+                    r_tip = r.get('tip', '')
+                    r_maps = self._maps_url(f"{r_name} {city}")
+                    r_res_url = r.get('reservation_url', '')
+                    r_res_req = r.get('reservation_required', False)
+                    
+                    r_line = f"**[{r_name}]({r_maps})**  {r_type} · {r_price}"
+                    if r_res_req and r_res_url and r_res_url.startswith('http'):
+                        r_line += f" 🎫 [예약]({r_res_url})"
+                    blocks.append(self._paragraph(r_line))
+                    if r_tip:
+                        blocks.append(self._paragraph(f"→ {r_tip}"))
+            
+            blocks.append(self._divider())
         
         # TRANSPORT & PARKING
         blocks.append(self._heading(2, "교통 및 이동"))
