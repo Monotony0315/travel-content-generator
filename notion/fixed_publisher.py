@@ -153,11 +153,29 @@ class FixedNotionPublisher:
         
         return result if result else [{"type": "text", "text": {"content": text}}]
 
+    def _clean_text(self, text: str) -> str:
+        """텍스트 정제: \\n 제거, 공백 정리"""
+        import re
+        
+        # \\n 문자열 제거
+        text = text.replace('\\n', ' ')
+        
+        # 실제 개행문자도 공백으로
+        text = text.replace('\n', ' ')
+        
+        # 연속된 공백 정리
+        text = re.sub(r'\s+', ' ', text)
+        
+        return text.strip()
+    
     def _rt(self, text: str, bold: bool = False, link: Optional[str] = None, color: Optional[str] = None) -> List[Dict]:
         """Rich text 생성 - 마크다운 링크와 긴 텍스트 처리"""
+        # 텍스트 정제
+        text = self._clean_text(str(text))
+        
         # 마크다운 링크가 있는지 확인
         if '[' in text and '](' in text:
-            items = self._parse_markdown_links(str(text))
+            items = self._parse_markdown_links(text)
             # bold/color 적용
             for item in items:
                 if bold and "annotations" in item:
@@ -168,19 +186,45 @@ class FixedNotionPublisher:
                     item.setdefault("annotations", {})["color"] = color
             return items
         
-        # 일반 텍스트 처리
-        chunks = self._split_long_text(str(text), self.MAX_TEXT_LENGTH)
+        # 일반 텍스트 처리 - 문장 단위로 분리
+        sentences = []
+        import re
+        parts = re.split(r'([.!?]+\s+)', text)
+        
+        current = ""
+        for part in parts:
+            if not part.strip():
+                continue
+            if len(current) + len(part) < 120:
+                current += part
+            else:
+                if current.strip():
+                    sentences.append(current.strip())
+                current = part
+        
+        if current.strip():
+            sentences.append(current.strip())
+        
+        if not sentences:
+            sentences = [text]
+        
         result = []
-        for chunk in chunks:
-            item = {"type": "text", "text": {"content": chunk}}
+        for i, sentence in enumerate(sentences):
+            if not sentence.strip():
+                continue
+            item = {"type": "text", "text": {"content": sentence}}
             if bold:
                 item["annotations"] = {"bold": True}
-            if link:
+            if link and i == 0:
                 item["text"]["link"] = {"url": link}
             if color:
                 item.setdefault("annotations", {})["color"] = color
             result.append(item)
-        return result
+            
+            if i < len(sentences) - 1:
+                result.append({"type": "text", "text": {"content": " "}})
+        
+        return result if result else [{"type": "text", "text": {"content": text}}]
 
     def _heading(self, level: int, text: str) -> Dict:
         t = f"heading_{level}"
