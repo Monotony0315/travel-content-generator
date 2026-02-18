@@ -245,14 +245,35 @@ class FixedNotionPublisher:
     def _divider(self) -> Dict:
         return {"object": "block", "type": "divider", "divider": {}}
 
-    def _image_external(self, url: str, caption: str = "") -> Dict:
+    def _get_image_attribution(self, image: Dict) -> str:
+        """이미지 출처 생성"""
+        source = image.get("source", "unknown")
+        photographer = image.get("photographer", "Unknown")
+        
+        if source == "unsplash":
+            return f"📷 {photographer} on Unsplash"
+        elif source == "pexels":
+            return f"📷 {photographer} on Pexels"
+        elif source == "pixabay":
+            return f"📷 {photographer} on Pixabay"
+        else:
+            return f"📷 {photographer}"
+
+    def _image_external(self, url: str, caption: str = "", attribution: str = "") -> Dict:
         block = {
             "object": "block",
             "type": "image",
             "image": {"type": "external", "external": {"url": url}},
         }
-        if caption:
-            block["image"]["caption"] = [{"type": "text", "text": {"content": caption}}]
+        # caption + attribution 함께 표시
+        caption_text = caption
+        if attribution:
+            if caption_text:
+                caption_text += f" | {attribution}"
+            else:
+                caption_text = attribution
+        if caption_text:
+            block["image"]["caption"] = [{"type": "text", "text": {"content": caption_text}}]
         return block
 
     def _build_final_blocks(self, content: Dict, images: List[Dict], city: str) -> List[Dict]:
@@ -260,9 +281,10 @@ class FixedNotionPublisher:
         dest = content["destination"]
         blocks = []
         
-        # Hero Image
+        # Hero Image with attribution
         if images:
-            blocks.append(self._image_external(images[0]["url"], f"{city} 대표 이미지"))
+            hero_attr = self._get_image_attribution(images[0])
+            blocks.append(self._image_external(images[0]["url"], f"{city} 대표 이미지", hero_attr))
         
         # Title
         blocks.append(self._heading(1, f"{city} 여행 완벽 가이드"))
@@ -289,7 +311,7 @@ class FixedNotionPublisher:
                 if maps_url and maps_url.startswith('http'):
                     hotel_text = f"[{hotel_name}]({maps_url}) ★{h['rating']} | {h['price_per_night']} | {h['area']}"
                 else:
-                    hotel_text = f"**{hotel_name}** ★{h['rating']} | {h['price_per_night']} | {h['area']}"
+                    hotel_text = f"{hotel_name} ★{h['rating']} | {h['price_per_night']} | {h['area']}"
                 blocks.append(self._paragraph(hotel_text))
         
         blocks.append(self._divider())
@@ -300,9 +322,10 @@ class FixedNotionPublisher:
         for idx, day in enumerate(content.get("days_plan", [])):
             day_num = day.get("day", idx + 1)
             
-            # Day image
+            # Day image with attribution
             if len(images) > day_num:
-                blocks.append(self._image_external(images[day_num]["url"], f"Day {day_num}"))
+                day_attr = self._get_image_attribution(images[day_num])
+                blocks.append(self._image_external(images[day_num]["url"], f"Day {day_num}", day_attr))
             
             # Day header
             blocks.append(self._callout(f"📌 Day {day_num}: {day['title']}", "", "blue_background"))
@@ -326,8 +349,8 @@ class FixedNotionPublisher:
                     res_url = spot.get('reservation_url', '')
                     res_req = spot.get('reservation_required', False)
                     
-                    # 장소명 + 시간 (1줄)
-                    title_line = f"**{i}. [{name}]({maps_url})**"
+                    # 장소명 + 시간 (1줄) - bold 제거
+                    title_line = f"{i}. [{name}]({maps_url})"
                     if time_str:
                         title_line += f"  ⏰ {time_str}"
                     blocks.append(self._paragraph(title_line))
@@ -371,7 +394,7 @@ class FixedNotionPublisher:
                     r_res_url = r.get('reservation_url', '')
                     r_res_req = r.get('reservation_required', False)
                     
-                    r_line = f"{emoji} **[{r_name}]({r_maps})**  {r_type} · {r_price}"
+                    r_line = f"{emoji} [{r_name}]({r_maps})  {r_type} · {r_price}"
                     blocks.append(self._paragraph(r_line))
                     
                     r_detail = ""
@@ -428,7 +451,7 @@ class FixedNotionPublisher:
                     r_res_url = r.get('reservation_url', '')
                     r_res_req = r.get('reservation_required', False)
                     
-                    r_line = f"**[{r_name}]({r_maps})**  {r_type} · {r_price}"
+                    r_line = f"[{r_name}]({r_maps})  {r_type} · {r_price}"
                     if r_res_req and r_res_url and r_res_url.startswith('http'):
                         r_line += f" 🎫 [예약]({r_res_url})"
                     blocks.append(self._paragraph(r_line))
