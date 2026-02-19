@@ -86,14 +86,23 @@ class EnhancedImageFetcher:
             return True, 0
     
     def _validate_url(self, url: str) -> bool:
-        """URL 유효성 확인"""
+        """URL 유효성 확인 - HEAD 실패 시 GET 시도"""
         try:
+            # 먼저 HEAD 요청 시도
             req = urllib.request.Request(url, method='HEAD')
-            req.add_header('User-Agent', 'Mozilla/5.0 (compatible; Bot/1.0)')
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 return resp.status == 200
-        except Exception as e:
-            return False
+        except:
+            # HEAD 실패하면 GET으로 첫 바이트만 확인
+            try:
+                req = urllib.request.Request(url, method='GET')
+                req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+                req.add_header('Range', 'bytes=0-0')
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    return resp.status in [200, 206]
+            except:
+                return False
     
     def get_image_attribution(self, image: Dict) -> str:
         """이미지 출처 정보 생성"""
@@ -284,40 +293,104 @@ class EnhancedImageFetcher:
             return []
     
     def _get_pexels_static(self, city: str, count: int = 6) -> List[Dict]:
-        """Pexels 정적 URL (API 제한시 fallback)"""
-        # 정적 URL 매핑 (기존 코드 유지)
+        """Pexels 정적 URL (API 제한시 fallback) - 검증된 작동 URL 사용"""
+        # 검증된 Pexels 정적 URL 매핑
         pexels_static_urls = {
             "Prague": [
                 "https://images.pexels.com/photos/164336/pexels-photo-164336.jpeg",
-                "https://images.pexels.com/photos/163405/prague-czech-republic-old-town-163405.jpeg",
+                "https://images.pexels.com/photos/163405/pexels-photo-163405.jpeg",
                 "https://images.pexels.com/photos/154566/pexels-photo-154566.jpeg",
                 "https://images.pexels.com/photos/142395/pexels-photo-142395.jpeg",
                 "https://images.pexels.com/photos/131381/pexels-photo-131381.jpeg",
                 "https://images.pexels.com/photos/157107/pexels-photo-157107.jpeg",
             ],
-            # ... 더 많은 도시
+            "Paris": [
+                "https://images.pexels.com/photos/532826/pexels-photo-532826.jpeg",
+                "https://images.pexels.com/photos/149114/pexels-photo-149114.jpeg",
+                "https://images.pexels.com/photos/1461974/pexels-photo-1461974.jpeg",
+                "https://images.pexels.com/photos/1308940/pexels-photo-1308940.jpeg",
+                "https://images.pexels.com/photos/843037/pexels-photo-843037.jpeg",
+                "https://images.pexels.com/photos/2817495/pexels-photo-2817495.jpeg",
+                "https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg",
+                "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg",
+                "https://images.pexels.com/photos/1963082/pexels-photo-1963082.jpeg",
+                "https://images.pexels.com/photos/2344/cars-france-landmark-lights.jpg",
+                "https://images.pexels.com/photos/161901/paris-sunset-eiffel-tower-champs-de-mars.jpg",
+                "https://images.pexels.com/photos/1530259/pexels-photo-1530259.jpeg",
+            ],
+            "Rome": [
+                "https://images.pexels.com/photos/753626/pexels-photo-753626.jpeg",
+                "https://images.pexels.com/photos/2676602/pexels-photo-2676602.jpeg",
+                "https://images.pexels.com/photos/2225442/pexels-photo-2225442.jpeg",
+                "https://images.pexels.com/photos/2064827/pexels-photo-2064827.jpeg",
+            ],
+            "Barcelona": [
+                "https://images.pexels.com/photos/819764/pexels-photo-819764.jpeg",
+                "https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg",
+                "https://images.pexels.com/photos/2567788/pexels-photo-2567788.jpeg",
+                "https://images.pexels.com/photos/1386444/pexels-photo-1386444.jpeg",
+                "https://images.pexels.com/photos/1874675/pexels-photo-1874675.jpeg",
+                "https://images.pexels.com/photos/3757144/pexels-photo-3757144.jpeg",
+                "https://images.pexels.com/photos/1268855/pexels-photo-1268855.jpeg",
+            ],
+            "London": [
+                "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg",
+                "https://images.pexels.com/photos/1796715/pexels-photo-1796715.jpeg",
+                "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg",
+                "https://images.pexels.com/photos/427679/pexels-photo-427679.jpeg",
+            ],
+            "Amsterdam": [
+                "https://images.pexels.com/photos/208733/pexels-photo-208733.jpeg",
+                "https://images.pexels.com/photos/161001/pexels-photo-161001.jpeg",
+                "https://images.pexels.com/photos/248149/pexels-photo-248149.jpeg",
+            ],
         }
         
         urls = pexels_static_urls.get(city, [])
+        
+        # 도시별 URL이 없으면 유럽/여행 일반 이미지 사용
         if not urls:
-            # 기본 이미지
             urls = [
-                "https://images.pexels.com/photos/6243470/pexels-photo-6243470.jpeg",
-                "https://images.pexels.com/photos/6243471/pexels-photo-6243471.jpeg",
-                "https://images.pexels.com/photos/6243472/pexels-photo-6243472.jpeg",
+                "https://images.pexels.com/photos/532826/pexels-photo-532826.jpeg",
+                "https://images.pexels.com/photos/149114/pexels-photo-149114.jpeg",
+                "https://images.pexels.com/photos/753626/pexels-photo-753626.jpeg",
+                "https://images.pexels.com/photos/164336/pexels-photo-164336.jpeg",
+                "https://images.pexels.com/photos/208733/pexels-photo-208733.jpeg",
+                "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg",
+                "https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg",
+                "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg",
+                "https://images.pexels.com/photos/1461974/pexels-photo-1461974.jpeg",
+                "https://images.pexels.com/photos/1308940/pexels-photo-1308940.jpeg",
+                "https://images.pexels.com/photos/843037/pexels-photo-843037.jpeg",
+                "https://images.pexels.com/photos/2817495/pexels-photo-2817495.jpeg",
             ]
         
         images = []
         for i, url in enumerate(urls[:count]):
-            if self._validate_url(url):
-                images.append({
-                    "url": url + "?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-                    "source": "pexels_static",
-                    "photographer": "Pexels",
-                    "description": f"{city} travel",
-                })
+            # URL 검증 (HEAD 요청이 실패할 수 있으므로 GET으로 변경)
+            try:
+                req = urllib.request.Request(url, method='GET')
+                req.add_header('User-Agent', 'Mozilla/5.0 (compatible; Bot/1.0)')
+                req.add_header('Range', 'bytes=0-0')  # Only fetch first byte to check if valid
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    if resp.status in [200, 206]:  # 206 = Partial Content
+                        images.append({
+                            "url": url + "?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                            "source": "pexels_static",
+                            "photographer": "Pexels",
+                            "description": f"{city} travel",
+                        })
+            except Exception as e:
+                logger.debug(f"Static URL failed: {url[:60]}... - {e}")
+                continue
         
+        logger.info(f"Static fallback: {len(images)} valid images for {city}")
         return images
+    
+    def _get_image_url_key(self, url: str) -> str:
+        """URL에서 고유 식별자 추출 (중복 체크용)"""
+        # 쿼리 파라미터 제거하고 기본 URL 비교
+        return url.split('?')[0].strip()
     
     def get_city_images(self, city: str, country: str = "", days_plan: List[Dict] = None, count: int = 6) -> List[Dict]:
         """
@@ -330,53 +403,73 @@ class EnhancedImageFetcher:
             count: 필요한 이미지 수 (Hero + Day 1-5 = 6)
         """
         images = []
+        used_urls = set()  # URL 중복 체크용
         
         # 일정별 검색어 생성
         queries = self._generate_day_queries(city, country, days_plan, count)
         
         logger.info(f"Getting images for {city}: {queries}")
         
-        # 1. Unsplash API 우선 시도 (고품질)
-        for query in queries:
-            if len(images) >= count:
-                break
-            unsplash_imgs = self._get_unsplash_images(query, 2)
-            for img in unsplash_imgs:
-                if img not in images and self._validate_url(img["url"]):
-                    images.append(img)
-                    if len(images) >= count:
-                        break
+        # 1. 먼저 정적 이미지로 기본 확보 (city-specific)
+        static_imgs = self._get_pexels_static(city, count)
+        for img in static_imgs:
+            url_key = self._get_image_url_key(img["url"])
+            if url_key not in used_urls:
+                images.append(img)
+                used_urls.add(url_key)
+                if len(images) >= count:
+                    break
         
-        # 2. Pexels API (CC0 라이선스)
+        # 2. Unsplash API 우선 시도 (고품질)
+        if len(images) < count:
+            for query in queries:
+                if len(images) >= count:
+                    break
+                unsplash_imgs = self._get_unsplash_images(query, 2)
+                for img in unsplash_imgs:
+                    url_key = self._get_image_url_key(img["url"])
+                    if url_key not in used_urls and self._validate_url(img["url"]):
+                        images.append(img)
+                        used_urls.add(url_key)
+                        if len(images) >= count:
+                            break
+        
+        # 3. Pexels API (CC0 라이선스)
         if len(images) < count:
             for query in queries:
                 if len(images) >= count:
                     break
                 pexels_imgs = self._get_pexels_images(query, 2)
                 for img in pexels_imgs:
-                    if img not in images and self._validate_url(img["url"]):
+                    url_key = self._get_image_url_key(img["url"])
+                    if url_key not in used_urls and self._validate_url(img["url"]):
                         images.append(img)
+                        used_urls.add(url_key)
                         if len(images) >= count:
                             break
         
-        # 3. Pixabay API (추가 소스)
+        # 4. Pixabay API (추가 소스)
         if len(images) < count:
             for query in queries:
                 if len(images) >= count:
                     break
                 pixabay_imgs = self._get_pixabay_images(query, 2)
                 for img in pixabay_imgs:
-                    if img not in images and self._validate_url(img["url"]):
+                    url_key = self._get_image_url_key(img["url"])
+                    if url_key not in used_urls and self._validate_url(img["url"]):
                         images.append(img)
+                        used_urls.add(url_key)
                         if len(images) >= count:
                             break
         
-        # 4. 정적 이미지 fallback
+        # 5. 정적 이미지로 부족분 보충
         if len(images) < count:
-            static_imgs = self._get_pexels_static(city, count - len(images))
-            for img in static_imgs:
-                if img not in images:
+            additional_static = self._get_pexels_static(city, count)
+            for img in additional_static:
+                url_key = self._get_image_url_key(img["url"])
+                if url_key not in used_urls:
                     images.append(img)
+                    used_urls.add(url_key)
                     if len(images) >= count:
                         break
         

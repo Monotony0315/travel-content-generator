@@ -675,7 +675,6 @@ Musée de Montmartre는 몽마르트 미술관이에요. 르누아르, 발라, �
         # 3. 기존 cities_db에 있는 경우 (Rome, Bangkok 등) - 점진적으로 마이그레이션
         # 기존 데이터를 rich format으로 변환
         logger.info(f"Converting existing data for {city} to rich format")
-        return self._convert_existing_to_rich(city, days, actual_region)
         
         data = self.cities_db[city]
         country = data.get("country", "France")

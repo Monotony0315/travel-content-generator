@@ -1,6 +1,6 @@
 """
 Generate Enhanced Rich Travel Blog - Daily Automation
-최종 버전 - 통계 기반 일정 + 호텔 + 비용 + 인라인 링크 + 도시 자동 순환 + 여행 블로그 링크
+최종 버전 - SEO 최적화 + 통계 기반 일정 + 호텔 + 비용 + 인라인 링크 + 도시 자동 순환
 """
 
 import asyncio
@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from content.enhanced_generator import enhanced_generator
 from content.enhanced_image_fetcher import enhanced_image_fetcher
+from notion.seo_publisher import SEOEnhancedPublisher
 from notion.fixed_publisher import FixedNotionPublisher
 from city_rotator import get_next_city, get_city_by_name
 from loguru import logger
@@ -63,9 +64,13 @@ async def generate_enhanced_blog(city_name: str = None):
     )
     logger.info(f"Fetched {len(images)} images")
     
-    # Publish to Notion
-    logger.info("Publishing to Notion with inline links...")
-    publisher = FixedNotionPublisher()
+    # Publish to Notion with SEO enhancements
+    logger.info("Publishing to Notion with SEO optimization...")
+    publisher = SEOEnhancedPublisher()
+    
+    if not publisher.enabled:
+        logger.warning("SEO publisher not enabled, falling back to FixedNotionPublisher")
+        publisher = FixedNotionPublisher()
     
     if not publisher.enabled:
         logger.error("Notion publisher not enabled")
