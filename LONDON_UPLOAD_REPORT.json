@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-02-19T23:21:56.819697",
+  "city": "London",
+  "page_url": "https://www.notion.so/2026-02-19-London-UK-5-2287-30c20a81386f813e9a76e1ffe50775d9",
+  "total_images": 6,
+  "image_sources": {
+    "unsplash": 6
+  },
+  "api_stats": {
+    "unsplash": {
+      "hourly_used": 12,
+      "hourly_limit": 50,
+      "daily_used": 12,
+      "daily_limit": 500
+    },
+    "pexels": {
+      "hourly_used": 2,
+      "hourly_limit": 200,
+      "daily_used": 25,
+      "daily_limit": 2000
+    },
+    "pixabay": {
+      "hourly_used": 0,
+      "hourly_limit": 100,
+      "daily_used": 2,
+      "daily_limit": 5000
+    },
+    "wikimedia": {
+      "hourly_used": 0,
+      "hourly_limit": 500,
+      "daily_used": 8,
+      "daily_limit": 5000
+    }
+  },
+  "images": [
+    {
+      "index": 0,
+      "source": "unsplash",
+      "photographer": "Scott Webb",
+      "url": "https://images.unsplash.com/photo-1752350851422-6a33881a90f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    },
+    {
+      "index": 1,
+      "source": "unsplash",
+      "photographer": "Samuel Regan-Asante",
+      "url": "https://images.unsplash.com/photo-1626528315861-6f1a10858fdc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    },
+    {
+      "index": 2,
+      "source": "unsplash",
+      "photographer": "Jeremy Brady",
+      "url": "https://images.unsplash.com/photo-1700923884850-761f1da0c0e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    },
+    {
+      "index": 3,
+      "source": "unsplash",
+      "photographer": "Samuel Regan-Asante",
+      "url": "https://images.unsplash.com/photo-1635230853699-26438152f4c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    },
+    {
+      "index": 4,
+      "source": "unsplash",
+      "photographer": "Erin Doering",
+      "url": "https://images.unsplash.com/photo-1592236279262-48be368088e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    },
+    {
+      "index": 5,
+      "source": "unsplash",
+      "photographer": "Samuel Regan-Asante",
+      "url": "https://images.unsplash.com/photo-1635230853699-26438152f4c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg..."
+    }
+  ]
+}

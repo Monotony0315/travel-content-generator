@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from content.enhanced_generator import enhanced_generator
-from content.enhanced_image_fetcher import enhanced_image_fetcher
+from content.accurate_image_fetcher import accurate_image_fetcher
 from notion.seo_publisher import SEOEnhancedPublisher
 from notion.fixed_publisher import FixedNotionPublisher
 from city_rotator import get_next_city, get_city_by_name
@@ -52,16 +52,20 @@ async def generate_enhanced_blog(city_name: str = None):
     
     logger.info(f"Content generated: {content['title']}")
     
-    # Fetch more images for daily sections (hero + 5 days = 6 images)
-    # 일정별 테마에 맞는 이미지 가져오기
-    logger.info("Fetching images with day-specific themes (Unsplash API priority)...")
-    days_plan = content.get('days_plan', [])
-    images = enhanced_image_fetcher.get_city_images(
+    # Fetch accurate landmark images for the city
+    # NEW: Uses specific landmark database to ensure images match actual destination
+    logger.info("Fetching ACCURATE landmark images for the city...")
+    images = accurate_image_fetcher.get_city_images(
         city=city, 
-        country=country,
-        days_plan=days_plan,
         count=6
     )
+    
+    # Validate we got images
+    if not images or len(images) < 3:
+        logger.error(f"❌ Failed to get enough images for {city}")
+        return None
+    
+    logger.info(f"✅ Got {len(images)} accurate images for {city}")
     logger.info(f"Fetched {len(images)} images")
     
     # Publish to Notion with SEO enhancements

@@ -1,0 +1,72 @@
+{
+  "test_date": "2026-02-19",
+  "city": "London",
+  "total_images": 6,
+  "sources": {
+    "unsplash": 6
+  },
+  "api_stats": {
+    "unsplash": {
+      "hourly_used": 38,
+      "hourly_limit": 50,
+      "daily_used": 38,
+      "daily_limit": 500
+    },
+    "pexels": {
+      "hourly_used": 5,
+      "hourly_limit": 200,
+      "daily_used": 5,
+      "daily_limit": 2000
+    },
+    "pixabay": {
+      "hourly_used": 2,
+      "hourly_limit": 100,
+      "daily_used": 2,
+      "daily_limit": 5000
+    },
+    "wikimedia": {
+      "hourly_used": 8,
+      "hourly_limit": 500,
+      "daily_used": 8,
+      "daily_limit": 5000
+    }
+  },
+  "images": [
+    {
+      "day": "Hero",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1752350851422-6a33881a90f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBMb25kb24lMjBDaXR5c2NhcGV8ZW58MHwwfHx8MTc3MTUwNTc2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Scott Webb"
+    },
+    {
+      "day": "Day 1",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1745016176874-cd3ed3f5bfc6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBCaWclMjBCZW58ZW58MHwwfHx8MTc3MTUwNTc2MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Muuw"
+    },
+    {
+      "day": "Day 2",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBUb3dlciUyMEJyaWRnZXxlbnwwfDB8fHwxNzcxNTA1NzY5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Charles Postiaux"
+    },
+    {
+      "day": "Day 3",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1662142063379-48dbad7fde86?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBCdWNraW5naGFtJTIwUGFsYWNlfGVufDB8MHx8fDE3NzE1MDU3Njl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Ryan Miller"
+    },
+    {
+      "day": "Day 4",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1458891104623-de7a64942c43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBCcml0aXNoJTIwTXVzZXVtfGVufDB8MHx8fDE3NzE1MDU3NzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Ezra Jeffrey-Comeau"
+    },
+    {
+      "day": "Day 5",
+      "source": "unsplash",
+      "url": "https://images.unsplash.com/photo-1590497236370-a2136c967df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBDYW1kZW4lMjBNYXJrZXR8ZW58MHwwfHx8MTc3MTUwNTc3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "photographer": "Jared Lisack"
+    }
+  ]
+}

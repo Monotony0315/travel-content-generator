@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-02-20T00:50:14",
+  "city": "London",
+  "page_url": "https://www.notion.so/2026-02-20-London-UK-5-Day-Complete-Travel-Guide-2480-30c20a81386f811e97e4cfd6a83f97cc",
+  "total_images": 6,
+  "image_sources": {
+    "pexels_static": 4,
+    "pexels_api": 2,
+    "unsplash": 0
+  },
+  "api_stats": {
+    "unsplash": {
+      "status": "DISABLED",
+      "message": "Unsplash API disabled for testing - using Pexels + Pixabay only"
+    },
+    "pexels": {
+      "status": "ACTIVE",
+      "api_key_configured": true,
+      "images_fetched": 2
+    },
+    "pixabay": {
+      "status": "ACTIVE",
+      "api_key_configured": true,
+      "images_fetched": 0
+    }
+  },
+  "images": [
+    {
+      "index": 0,
+      "source": "pexels_static",
+      "url": "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg"
+    },
+    {
+      "index": 1,
+      "source": "pexels_static",
+      "url": "https://images.pexels.com/photos/1796715/pexels-photo-1796715.jpeg"
+    },
+    {
+      "index": 2,
+      "source": "pexels_static",
+      "url": "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg"
+    },
+    {
+      "index": 3,
+      "source": "pexels_static",
+      "url": "https://images.pexels.com/photos/427679/pexels-photo-427679.jpeg"
+    },
+    {
+      "index": 4,
+      "source": "pexels_api",
+      "url": "https://images.pexels.com/photos/34493326/pexels-photo-34493326.jpeg"
+    },
+    {
+      "index": 5,
+      "source": "pexels_api",
+      "url": "https://images.pexels.com/photos/34493328/pexels-photo-34493328.jpeg"
+    }
+  ],
+  "verification_results": {
+    "no_emojis": "PASS",
+    "markdown_links_only": "PASS",
+    "unique_images": "PASS (6/6 unique)"
+  },
+  "notes": [
+    "Unsplash API successfully disabled",
+    "All 6 images retrieved from Pexels (static + API)",
+    "No duplicate image URLs",
+    "All URLs use markdown format [text](url)",
+    "No emojis found in content"
+  ]
+}

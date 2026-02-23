@@ -476,14 +476,129 @@ AVAILABLE_CITIES: List[Dict] = [
         "https://www.lonelyplanet.com/uae/abu-dhabi",
         "https://www.tripadvisor.com/Tourism-g294013-Abu_Dhabi_Emirate_of_Abu_Dhabi-Vacations.html",
     ]},
+
+    # ========== 휴양지/리조트 (전세계) ==========
+    {"name": "Maldives", "country": "Maldives", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/maldives",
+        "https://www.tripadvisor.com/Tourism-g293953-Maldives-Vacations.html",
+        "https://www.theguardian.com/travel/maldives",
+        "https://www.timeout.com/maldives",
+    ]},
+    {"name": "Bali", "country": "Indonesia", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/indonesia/bali",
+        "https://www.tripadvisor.com/Tourism-g294226-Bali-Vacations.html",
+        "https://www.theguardian.com/travel/bali",
+        "https://www.timeout.com/bali",
+    ]},
+    {"name": "Phuket", "country": "Thailand", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/thailand/phuket-province/phuket",
+        "https://www.tripadvisor.com/Tourism-g293920-Phuket-Vacations.html",
+        "https://www.theguardian.com/travel/phuket",
+        "https://www.timeout.com/phuket",
+    ]},
+    {"name": "Santorini", "country": "Greece", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/greece/cyclades/santorini-thira",
+        "https://www.tripadvisor.com/Tourism-g189433-Santorini_Cyclades_South_Aegean-Vacations.html",
+        "https://www.theguardian.com/travel/santorini",
+        "https://www.timeout.com/santorini",
+    ]},
+    {"name": "Hawaii (Oahu)", "country": "USA", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/usa/hawaii/oahu",
+        "https://www.tripadvisor.com/Tourism-g60982-Oahu_Hawaii-Vacations.html",
+        "https://www.theguardian.com/travel/hawaii",
+        "https://www.timeout.com/hawaii",
+    ]},
+    {"name": "Bora Bora", "country": "French Polynesia", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/french-polynesia/bora-bora",
+        "https://www.tripadvisor.com/Tourism-g311415-Bora_Bora_Society_Islands-Vacations.html",
+        "https://www.theguardian.com/travel/french-polynesia",
+        "https://www.timeout.com/french-polynesia",
+    ]},
+    {"name": "Seychelles", "country": "Seychelles", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/seychelles",
+        "https://www.tripadvisor.com/Tourism-g293738-Seychelles-Vacations.html",
+        "https://www.theguardian.com/travel/seychelles",
+        "https://www.timeout.com/seychelles",
+    ]},
+    {"name": "Cancun", "country": "Mexico", "region": "휴양지", "blog_links": [
+        "https://www.lonelyplanet.com/mexico/cancun-and-the-yucatan/cancun",
+        "https://www.tripadvisor.com/Tourism-g150807-Cancun_Yucatan_Peninsula-Vacations.html",
+        "https://www.theguardian.com/travel/cancun",
+        "https://www.timeout.com/cancun",
+    ]},
 ]
 
 STATE_FILE = Path(__file__).resolve().parent / "data" / "city_rotation.json"
 
+# --- Rotation policy ---
+# Goal: include world-famous resorts with a fixed share (default 20%), while keeping
+# a balanced mix across regions for non-resort cities.
+RESORT_REGION_NAME = "휴양지"
+RESORT_SHARE = 0.20  # 20%
+
+
+def _build_rotation_order() -> List[Dict]:
+    """Build deterministic rotation order: 4 cities + 1 resort (20%).
+
+    Cities are selected in a round-robin across regions (excluding resorts).
+    Resorts are selected in a simple cycle.
+    """
+    resorts = [c for c in AVAILABLE_CITIES if c.get("region") == RESORT_REGION_NAME]
+    cities = [c for c in AVAILABLE_CITIES if c.get("region") != RESORT_REGION_NAME]
+
+    # Group cities by region (excluding resorts)
+    by_region: Dict[str, List[Dict]] = {}
+    for c in cities:
+        by_region.setdefault(c.get("region", "기타"), []).append(c)
+
+    region_keys = sorted(by_region.keys())
+
+    # Interleave cities by region for balance
+    interleaved_cities: List[Dict] = []
+    pointers = {rk: 0 for rk in region_keys}
+    remaining = sum(len(by_region[rk]) for rk in region_keys)
+    while remaining > 0:
+        progressed = False
+        for rk in region_keys:
+            i = pointers[rk]
+            if i < len(by_region[rk]):
+                interleaved_cities.append(by_region[rk][i])
+                pointers[rk] += 1
+                remaining -= 1
+                progressed = True
+        if not progressed:
+            break
+
+    # If no resorts, fallback to just cities
+    if not resorts:
+        return interleaved_cities
+
+    # Insert 1 resort for every 4 cities (20%)
+    order: List[Dict] = []
+    resort_idx = 0
+    chunk = 4
+    for i in range(0, len(interleaved_cities), chunk):
+        order.extend(interleaved_cities[i:i + chunk])
+        order.append(resorts[resort_idx % len(resorts)])
+        resort_idx += 1
+
+    # Rotate so the series starts from Paris when present (makes launches predictable)
+    try:
+        paris_idx = next(i for i,c in enumerate(order) if c.get('name') == 'Paris')
+        order = order[paris_idx:] + order[:paris_idx]
+    except StopIteration:
+        pass
+
+    return order
+
+
+ROTATION_ORDER: List[Dict] = _build_rotation_order()
+
+
 def get_next_city() -> Dict:
-    """다음에 생성할 도시를 순환하여 반환"""
+    """다음에 생성할 도시/휴양지를 순환하여 반환 (리조트 20% 비중 + 지역 균형)"""
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # 상태 파일 로드
     if STATE_FILE.exists():
         try:
@@ -493,11 +608,14 @@ def get_next_city() -> Dict:
             last_index = -1
     else:
         last_index = -1
-    
-    # 다음 도시 인덱스 계산
-    next_index = (last_index + 1) % len(AVAILABLE_CITIES)
-    next_city = AVAILABLE_CITIES[next_index]
-    
+
+    # 다음 인덱스 계산
+    if not ROTATION_ORDER:
+        raise RuntimeError("No cities available in rotation")
+
+    next_index = (last_index + 1) % len(ROTATION_ORDER)
+    next_city = ROTATION_ORDER[next_index]
+
     # 상태 저장
     state = {
         "last_index": next_index,
@@ -506,9 +624,11 @@ def get_next_city() -> Dict:
         "last_region": next_city["region"],
         "last_run": datetime.now().isoformat(),
         "total_cities": len(AVAILABLE_CITIES),
+        "rotation_length": len(ROTATION_ORDER),
+        "resort_share": RESORT_SHARE,
     }
     STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-    
+
     return next_city
 
 def get_current_city() -> Dict:

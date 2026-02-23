@@ -17,13 +17,18 @@ from loguru import logger
 
 
 class EnhancedImageFetcher:
-    """Unsplash API 우선 사용, 일정별 테마 이미지, 5MB 제한 준수"""
+    """Pexels + Pixabay API 우선 사용, 일정별 테마 이미지, 5MB 제한 준수 (Unsplash DISABLED)"""
+    
+    # API Keys (Hardcoded for consistency - Unsplash DISABLED for testing)
+    UNSPLASH_ACCESS_KEY = ""  # DISABLED
+    PEXELS_API_KEY = "ioGXDRNtGkKS4xnh96owdsVasgdCuQdLs8GRjCgd6Beb0UPyp9z6igtW"
+    PIXABAY_API_KEY = "54702280-34b6357830834f9bd1e0d1ed3"
     
     def __init__(self):
-        # API Keys
-        self.unsplash_key = os.getenv("UNSPLASH_ACCESS_KEY", "")
-        self.pexels_key = os.getenv("PEXELS_API_KEY", "")
-        self.pixabay_key = os.getenv("PIXABAY_API_KEY", "")
+        # API Keys - Use hardcoded values (Unsplash DISABLED)
+        self.unsplash_key = ""  # DISABLED for testing
+        self.pexels_key = self.PEXELS_API_KEY
+        self.pixabay_key = self.PIXABAY_API_KEY
         
         # Settings
         self.max_size_mb = 5
@@ -139,7 +144,11 @@ class EnhancedImageFetcher:
         return "\n".join(attributions)
     
     def _get_unsplash_images(self, query: str, count: int = 6) -> List[Dict]:
-        """Unsplash API로 이미지 가져오기 (우선 순위 1)"""
+        """Unsplash API로 이미지 가져오기 (DISABLED FOR TESTING - Using Pexels + Pixabay only)"""
+        logger.info("Unsplash API DISABLED for testing - skipping")
+        return []  # DISABLED - Using Pexels + Pixabay only
+        
+        # Original code below (disabled):
         if not self.unsplash_key:
             logger.info("Unsplash API key not configured, skipping")
             return []
@@ -206,6 +215,7 @@ class EnhancedImageFetcher:
             url = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page={count}&orientation=landscape"
             req = urllib.request.Request(url)
             req.add_header("Authorization", self.pexels_key)
+            req.add_header("User-Agent", "Mozilla/5.0 (Travel Content Bot)")
             
             with urllib.request.urlopen(req, timeout=20) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -480,43 +490,66 @@ class EnhancedImageFetcher:
         return images[:count]
     
     def _generate_day_queries(self, city: str, country: str, days_plan: List[Dict], count: int) -> List[str]:
-        """일정별 검색어 생성"""
+        """일정별 검색어 생성 - 도시별 특정 랜드마크 사용"""
         queries = []
         
-        # Hero 이미지용
-        queries.append(f"{city} {country} travel landmark cityscape")
+        # 도시별 특정 랜드마크 매핑
+        CITY_LANDMARKS = {
+            "Vienna": ["Schönbrunn Palace Vienna", "St. Stephen's Cathedral Vienna", "Belvedere Palace Vienna", 
+                      "Hofburg Palace Vienna", "Prater Vienna Giant Wheel", "Vienna State Opera"],
+            "London": ["Big Ben London", "Tower Bridge London", "Buckingham Palace London", 
+                      "British Museum London", "Westminster Abbey London", "London Eye"],
+            "Paris": ["Eiffel Tower Paris", "Louvre Museum Paris", "Notre-Dame Cathedral Paris", 
+                     "Arc de Triomphe Paris", "Sacré-Cœur Paris", "Seine River Paris"],
+            "Rome": ["Colosseum Rome", "Vatican City Rome", "Trevi Fountain Rome", 
+                    "Pantheon Rome", "Roman Forum Rome", "Spanish Steps Rome"],
+            "Amsterdam": ["Amsterdam Canal houses", "Rijksmuseum Amsterdam", "Anne Frank House Amsterdam", 
+                         "Van Gogh Museum Amsterdam", "Dam Square Amsterdam", "Vondelpark Amsterdam"],
+            "Prague": ["Prague Castle", "Charles Bridge Prague", "Old Town Square Prague", 
+                      "Prague Astronomical Clock", "St. Vitus Cathedral Prague", "Prague Jewish Quarter"],
+            "Barcelona": ["Sagrada Familia Barcelona", "Park Güell Barcelona", "Casa Batlló Barcelona", 
+                         "Gothic Quarter Barcelona", "La Rambla Barcelona", "Camp Nou Barcelona"],
+            "Florence": ["Duomo Florence", "Uffizi Gallery Florence", "Ponte Vecchio Florence",
+                        "David Michelangelo Florence", "Palazzo Vecchio Florence", "Boboli Gardens Florence"],
+            "Venice": ["Grand Canal Venice", "St. Mark's Square Venice", "Rialto Bridge Venice",
+                      "Doge's Palace Venice", "Burano Island Venice", "Gondola Venice"],
+        }
+        
+        # 해당 도시의 랜드마크 가져오기
+        landmarks = CITY_LANDMARKS.get(city, [f"{city} famous landmark", f"{city} iconic place"])
+        
+        # Hero 이미지용 - 첫 번째 랜드마크 사용
+        queries.append(f"{landmarks[0]} exterior view")
         
         if days_plan and len(days_plan) > 0:
-            for day in days_plan[:5]:
+            for i, day in enumerate(days_plan[:5]):
                 theme = day.get("theme", "")
                 title = day.get("title", "")
                 
-                # 테마 기반 검색어 생성
+                # 테마 기반 검색어 생성 + 특정 랜드마크 사용
                 if "도착" in title or "적응" in theme:
-                    queries.append(f"{city} airport arrival city center")
+                    queries.append(f"{city} city center aerial view")
                 elif "상징" in theme or "랜드마크" in theme:
-                    queries.append(f"{city} famous landmark iconic")
+                    landmark_idx = min(1, len(landmarks)-1)
+                    queries.append(f"{landmarks[landmark_idx]} exterior architecture")
                 elif "문화" in theme or "예술" in theme or "박물관" in theme:
-                    queries.append(f"{city} museum culture art")
-                elif "해변" in theme or "휴양" in theme:
-                    queries.append(f"{city} beach resort relax")
+                    landmark_idx = min(2, len(landmarks)-1)
+                    queries.append(f"{landmarks[landmark_idx]} interior museum")
                 elif "쇼핑" in theme or "마무리" in theme:
-                    queries.append(f"{city} shopping street market")
+                    queries.append(f"{city} shopping street cafe")
                 elif "음식" in theme or "맛집" in theme:
-                    queries.append(f"{city} food restaurant local")
+                    queries.append(f"{city} traditional food restaurant")
                 elif "야경" in theme or "밤" in theme:
-                    queries.append(f"{city} night view skyline")
+                    landmark_idx = min(3, len(landmarks)-1)
+                    queries.append(f"{landmarks[landmark_idx]} night illuminated")
                 else:
-                    queries.append(f"{city} travel destination")
+                    landmark_idx = i % len(landmarks)
+                    queries.append(f"{landmarks[landmark_idx]} scenic view")
         else:
-            # 일정 정보 없으면 기본 쿼리
-            queries.extend([
-                f"{city} landmark",
-                f"{city} street",
-                f"{city} architecture",
-                f"{city} food",
-                f"{city} night",
-            ])
+            # 일정 정보 없으면 랜드마크 순환 사용
+            for i in range(5):
+                landmark_idx = i % len(landmarks)
+                queries.append(f"{landmarks[landmark_idx]} beautiful view")
         
         return queries[:count]
 
@@ -524,5 +557,7 @@ class EnhancedImageFetcher:
 # 싱글톤 인스턴스
 enhanced_image_fetcher = EnhancedImageFetcher()
 
+# 기존 호환성을 위한 alias
+image_fetcher = enhanced_image_fetcher
 # 기존 호환성을 위한 alias
 image_fetcher = enhanced_image_fetcher

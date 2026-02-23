@@ -365,7 +365,7 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
                     if time_str:
                         title_line += f"  ⏰ {time_str}"
                     blocks.append(self._paragraph(title_line))
-                    detail = spot['desc']
+                    detail = spot.get('desc', '')
                     if spot.get('tip'):
                         detail += f" 💡 {spot['tip']}"
                     if res_req and res_url and res_url.startswith('http'):

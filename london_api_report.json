@@ -1,0 +1,110 @@
+{
+  "test_date": "2026-02-19",
+  "city": "London",
+  "apis": {
+    "unsplash": {
+      "tested": true,
+      "images_found": 6,
+      "images": [
+        {
+          "landmark": "Big Ben",
+          "url": "https://images.unsplash.com/photo-1745016176874-cd3ed3f5bfc6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBCaWclMjBCZW58ZW58MHwwfHx8MTc3MTUwNTg4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+          "photographer": "Muuw",
+          "description": "Big ben and parliament are illuminated at sunset."
+        },
+        {
+          "landmark": "Big Ben",
+          "url": "https://images.unsplash.com/photo-1486299267070-83823f5448dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwyfHxMb25kb24lMjBCaWclMjBCZW58ZW58MHwwfHx8MTc3MTUwNTg4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+          "photographer": "Marcin Nowak",
+          "description": "Big Ben, London"
+        },
+        {
+          "landmark": "London Eye",
+          "url": "https://images.unsplash.com/photo-1602785160829-acc75cd79ae9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NzYzNTV8MHwxfHNlYXJjaHwxfHxMb25kb24lMjBMb25kb24lMjBFeWV8ZW58MHwwfHx8MTc3MTUwNTg4M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+          "photographer": "Yunus Yildiz",
+          "description": "ferris wheel near body of water during daytime"
+        }
+      ]
+    },
+    "pexels": {
+      "tested": true,
+      "images_found": 6,
+      "images": [
+        {
+          "landmark": "Big Ben",
+          "url": "https://images.pexels.com/photos/30029654/pexels-photo-30029654.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+          "photographer": "Jabez Cutamora",
+          "description": "Iconic Big Ben tower enveloped in fog with bustling London s"
+        },
+        {
+          "landmark": "Big Ben",
+          "url": "https://images.pexels.com/photos/29863352/pexels-photo-29863352.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+          "photographer": "Martino Grua",
+          "description": "A scenic view of London's skyline featuring the River Thames"
+        },
+        {
+          "landmark": "London Eye",
+          "url": "https://images.pexels.com/photos/17092032/pexels-photo-17092032.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+          "photographer": "Josh Withers",
+          "description": "Capture of the London skyline featuring the iconic BT Tower "
+        }
+      ]
+    },
+    "pixabay": {
+      "tested": true,
+      "images_found": 0,
+      "images": []
+    },
+    "wikimedia": {
+      "tested": true,
+      "images_found": 2,
+      "images": [
+        {
+          "landmark": "Big Ben",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Big_Ben_Elizabeth_Tower_London_2023_01.jpg",
+          "photographer": "Julian Herzog (Website)",
+          "description": "Detail of Big Ben on the newly restored Elizabeth tower of t"
+        },
+        {
+          "landmark": "Big Ben",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Big_Ben_at_sunset_-_2014-10-27_17-30.jpg",
+          "photographer": "Colin",
+          "description": "Big Ben at sunset with light trails on Westminster Bridge. F"
+        }
+      ]
+    }
+  },
+  "api_stats": {
+    "unsplash": {
+      "hourly_used": 25,
+      "hourly_limit": 50,
+      "daily_used": 25,
+      "daily_limit": 500
+    },
+    "pexels": {
+      "hourly_used": 4,
+      "hourly_limit": 200,
+      "daily_used": 4,
+      "daily_limit": 2000
+    },
+    "pixabay": {
+      "hourly_used": 2,
+      "hourly_limit": 100,
+      "daily_used": 2,
+      "daily_limit": 5000
+    },
+    "wikimedia": {
+      "hourly_used": 7,
+      "hourly_limit": 500,
+      "daily_used": 7,
+      "daily_limit": 5000
+    }
+  },
+  "itinerary_test": {
+    "total_images": 6,
+    "sources_breakdown": {
+      "unsplash": 6
+    },
+    "all_valid": true
+  }
+}
