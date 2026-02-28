@@ -15,6 +15,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from loguru import logger
 
+from content.review_fetcher import collect_travel_reviews
+
 
 class EnhancedRichGenerator:
     """Rich content generator with professional formatting"""
@@ -40,7 +42,20 @@ class EnhancedRichGenerator:
         country = city_info['country']
         
         # Use rich_city_generator for detailed content
-        return rich_city_generator.generate_rich_content(city, country, actual_region, days)
+        content = rich_city_generator.generate_rich_content(city, country, actual_region, days)
+
+        # Attach web review intelligence (Brave-first with fallback)
+        # - API-limit conscious: local caching + 1 call/minute in rate_limited_search
+        # - Fallback: Wikipedia summary when Brave is not available
+        try:
+            review_bundle = collect_travel_reviews(city=city, country=country, region=actual_region, limit=4)
+            if review_bundle and review_bundle.get("items"):
+                content["review_insights"] = review_bundle
+                logger.info(f"review_insights attached: {len(review_bundle.get('items', []))} items")
+        except Exception as e:
+            logger.warning(f"Review fetch skipped: {e}")
+
+        return content
 
     def _generate_seo_meta(self, city: str, country: str, days: int, region: str = "유럽") -> Dict:
         """SEO metadata"""

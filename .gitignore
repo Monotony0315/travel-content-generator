@@ -45,3 +45,9 @@ Thumbs.db
 # Project specific
 data/unsplash_usage.json
 *.log
+
+# Runtime state / caches / local outputs
+.omx/
+data/review_cache/
+data/search_cache/
+output/*.json

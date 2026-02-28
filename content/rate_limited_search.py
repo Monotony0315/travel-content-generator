@@ -15,6 +15,10 @@ import urllib.request
 import urllib.error
 import urllib.parse
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 CACHE_DIR = Path(__file__).parent.parent / "data" / "search_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 

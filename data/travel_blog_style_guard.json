@@ -1,0 +1,68 @@
+{
+  "version": "2026-02-24.travel-blog-style-v1",
+  "requirements": {
+    "intro": {
+      "required": true,
+      "mode": "blogger_tone",
+      "min_chars": 250,
+      "elements": [
+        "theme_opening",
+        "city_atmosphere_line",
+        "journey_context"
+      ]
+    },
+    "day_section": {
+      "required": true,
+      "min_days": 3,
+      "required_fields": [
+        "content",
+        "spots",
+        "restaurants",
+        "estimated_cost",
+        "reservation_notice"
+      ],
+      "content_min_chars": 280,
+      "content_min_paragraphs": 3
+    },
+    "restaurant_policy": {
+      "tiers_required": [
+        "budget",
+        "mid",
+        "luxury"
+      ],
+      "required_fields": [
+        "price",
+        "tip",
+        "type"
+      ]
+    },
+    "hotel_policy": {
+      "tiers_required": [
+        "budget",
+        "mid",
+        "luxury"
+      ],
+      "required_fields": [
+        "price_per_night",
+        "checkin",
+        "checkout",
+        "area",
+        "benefit"
+      ]
+    },
+    "style": {
+      "emoji_max_density": "low"
+    }
+  },
+  "runtime_fallback": {
+    "force_overwrite_intro": true,
+    "force_day_content": true,
+    "force_mid_tier_if_missing": true
+  },
+  "locked_files": [
+    "content/rich_city_generator.py",
+    "notion/fixed_publisher.py",
+    "notion/seo_publisher.py",
+    "generate_daily_blog.py"
+  ]
+}
