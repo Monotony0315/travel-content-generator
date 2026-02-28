@@ -275,17 +275,6 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
         blocks.append(self._callout(f"🔍 Keywords: {', '.join(keywords[:12])}", "", "gray_background"))
         blocks.append(self._divider())
 
-        # ── Table of Contents ──
-        blocks.append(self._heading(2, "📋 목차 (Table of Contents)"))
-        toc_items = ["여행 개요", "추천 호텔"]
-        for idx, day in enumerate(days_plan):
-            day_num = day.get("day", idx + 1)
-            toc_items.append(f"Day {day_num}: {day.get('title','')}")
-        toc_items += ["교통 및 이동", "총 예상 비용", "비상연락망", "FAQ", "관련 여행지", "Schema"]
-        for item in toc_items:
-            blocks.append(self._numbered_list_item(item))
-        blocks.append(self._divider())
-
         # ── Hero Image (SEO caption) ──
         if images:
             hero_caption = self._seo_image_caption(
@@ -313,7 +302,7 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
         # ── Hotels ──
         blocks.append(self._heading(2, "🏨 추천 호텔"))
         hotels = content.get("hotels", {})
-        for cat, label, color in [("budget", "💰 가성비", "green"), ("luxury", "✨ 럭셔리", "purple")]:
+        for cat, label, color in [("budget", "가성비", "green"), ("mid", "일반", "blue"), ("luxury", "고급", "purple")]:
             for h in hotels.get(cat, []):
                 blocks.append(self._callout(label, "", f"{color}_background"))
                 maps_url = h.get('maps_url', '')
@@ -322,8 +311,33 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
                 else:
                     name_text = f"{h['name']} ★{h['rating']} | {h['price_per_night']} | {h['area']}"
                 blocks.append(self._paragraph(name_text))
-                blocks.append(self._paragraph(f"✅ {h['pros']} | ⚠️ {h['cons']}"))
+                rec = h.get("recommended_for", "")
+                detail = f"{h['name']}은(는) {h.get('area', '주요 구역')} 기준 이동 동선이 안정적인 숙소입니다."
+                if rec:
+                    detail += f" {rec} 여행자에게 특히 잘 맞습니다."
+                blocks.append(self._paragraph(detail))
+                blocks.append(self._paragraph(f"장점: {h.get('pros', '-') }"))
+                blocks.append(self._paragraph(f"단점: {h.get('cons', '-') }"))
         blocks.append(self._divider())
+
+        # ── Review Insights (real usage signals) ──
+        review_bundle = content.get("review_insights", {}) if isinstance(content, dict) else {}
+        if isinstance(review_bundle, dict):
+            items = review_bundle.get("items", []) or []
+            if items:
+                blocks.append(self._heading(2, "실사용 리뷰 인사이트"))
+                for idx, row in enumerate(items[:5], 1):
+                    title = row.get("title", "리뷰 인사이트")
+                    source = row.get("source", "source")
+                    snippet = row.get("snippet", "")
+                    url = row.get("url", "")
+                    if url and str(url).startswith("http"):
+                        blocks.append(self._paragraph(f"{idx}. [{title}]({url}) ({source})"))
+                    else:
+                        blocks.append(self._paragraph(f"{idx}. {title} ({source})"))
+                    if snippet:
+                        blocks.append(self._paragraph(snippet[:320]))
+                blocks.append(self._divider())
 
         # ── Daily Itinerary (inherits parent logic, adds SEO) ──
         blocks.append(self._heading(2, "📅 일정 상세"))
@@ -342,7 +356,9 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
                 blocks.append(self._image_external(img["url"], caption))
 
             blocks.append(self._callout(f"📌 Day {day_num}: {day['title']}", "", "blue_background"))
-            blocks.append(self._paragraph(f"🎯 테마: {day['theme']}", bold=True))
+            blocks.append(self._paragraph(f"티켓/예약 필요: {'있음' if day.get('reservation_notice') else '없음'}"))
+            if day.get('reservation_notice'):
+                blocks.append(self._paragraph(f"🔔 예약 안내: {day.get('reservation_notice')}"))
 
             # Content paragraphs
             content_text = day.get("content", "").strip()
@@ -353,7 +369,7 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
             # Spots (H3)
             spots = day.get("spots", [])
             if spots:
-                blocks.append(self._heading(3, f"🗺️ Day {day_num} 주요 장소"))
+                blocks.append(self._heading(3, f"Day {day_num} 주요 장소"))
                 for i, spot in enumerate(spots, 1):
                     name = spot['name']
                     maps_url = self._maps_url(f"{name} {city}")
@@ -365,21 +381,36 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
                     if time_str:
                         title_line += f"  ⏰ {time_str}"
                     blocks.append(self._paragraph(title_line))
-                    detail = spot.get('desc', '')
+                    detail_parts = []
+                    if spot.get('desc'):
+                        detail_parts.append(spot.get('desc'))
+                    if spot.get('history'):
+                        detail_parts.append(spot.get('history'))
+                    if spot.get('duration'):
+                        detail_parts.append(f"소요시간: {spot.get('duration')}")
+                    if spot.get('fee'):
+                        detail_parts.append(f"입장료: {spot.get('fee')}")
                     if spot.get('tip'):
-                        detail += f" 💡 {spot['tip']}"
+                        detail_parts.append(f"💡 {spot['tip']}")
                     if res_req and res_url and res_url.startswith('http'):
-                        detail += f" 🎫 [예약하기]({res_url})"
-                    blocks.append(self._paragraph(detail))
+                        detail_parts.append(f"🎫 [예약하기]({res_url})")
+                    detail = " | ".join(detail_parts)
+                    blocks.append(self._paragraph(detail or day.get('theme', ''))) 
 
             # Restaurants (H3)
             restaurants = day.get("restaurants", [])
             if restaurants:
-                blocks.append(self._heading(3, f"🍽️ Day {day_num} 추천 식당"))
+                blocks.append(self._heading(3, f"Day {day_num} 추천 식당"))
                 for r in restaurants:
                     r_maps = self._maps_url(f"{r['name']} {city}")
                     r_line = f"[{r['name']}]({r_maps}) {r.get('type','')} · {r.get('price','')}"
                     blocks.append(self._paragraph(r_line))
+                    signatures = r.get("signature", []) if isinstance(r.get("signature", []), list) else []
+                    menu = r.get("recommended_menu", "") or ", ".join([str(x) for x in signatures[:2] if x])
+                    if menu:
+                        blocks.append(self._paragraph(f"추천 메뉴: {menu}"))
+                    blocks.append(self._paragraph(f"장점: {r.get('pros', '접근성이 좋아 일정 중간에 넣기 편함')}"))
+                    blocks.append(self._paragraph(f"단점: {r.get('cons', '피크 타임 대기 가능')}"))
                     if r.get('tip'):
                         blocks.append(self._paragraph(f"→ {r['tip']}"))
 
@@ -397,7 +428,7 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
 
         # ── Transport ──
         blocks.append(self._heading(2, "🚗 교통 및 이동"))
-        transport = content.get("transport_summary", {})
+        transport = content.get("transport_summary", content.get("transport", {}))
         for mode, price in transport.items():
             blocks.append(self._bulleted_list_item(f"{mode}: {price}"))
         if dest.get("car_rental_available"):
@@ -410,35 +441,37 @@ class SEOEnhancedPublisher(FixedNotionPublisher):
         # ── Cost Summary ──
         blocks.append(self._heading(2, "💰 총 예상 비용"))
         estimates = content.get("total_estimate", {})
-        for level, label, color in [("budget","💚 가성비","green"),("luxury","💜 럭셔리","purple")]:
-            est = estimates.get(level, {})
-            if not est:
-                continue
-            blocks.append(self._callout(label, "", f"{color}_background"))
-            for k, v in est.items():
-                if k != "total":
-                    blocks.append(self._bulleted_list_item(f"{k}: {v}"))
-            if est.get("total"):
-                blocks.append(self._paragraph(f"**총계: {est['total']}**", bold=True))
+        cost_rows = self._build_cost_table_rows(estimates if isinstance(estimates, dict) else {})
+        if cost_rows:
+            blocks.append(self._table(cost_rows, has_header=True))
+        else:
+            blocks.append(self._paragraph("비용 데이터를 아직 계산하지 못했습니다."))
         blocks.append(self._divider())
 
         # ── Emergency ──
-        blocks.append(self._heading(2, "🚨 비상연락망 & 대사관"))
+        blocks.append(self._heading(2, "🚨 비상연락망 & 영사 지원"))
         final_summary = content.get("final_summary", {})
         emergency = final_summary.get("emergency_contacts", {})
         embassy = final_summary.get("embassy_info", {})
         if emergency:
-            blocks.append(self._callout("긴급 신고번호", "🚨", "red_background"))
+            blocks.append(self._callout("현지 긴급 신고번호", "🚨", "red_background"))
             label_map = {"police":"👮 경찰","ambulance":"🚑 구급차","fire":"🚒 소방","general":"📞 통합신고"}
             for k, v in emergency.items():
+                if k == "tips":
+                    continue
                 blocks.append(self._bulleted_list_item(f"{label_map.get(k,k)}: {v}"))
+            if emergency.get("tips"):
+                blocks.append(self._paragraph(f"현지 안전 메모: {emergency.get('tips')}"))
         if embassy:
-            blocks.append(self._callout("한국대사관", "🏛️", "blue_background"))
-            for field, icon in [("name",""), ("phone","📞"), ("address","📍"), ("emergency_phone","🆘")]:
+            blocks.append(self._callout("영사 지원 연락처", "🏛️", "blue_background"))
+            embassy_fields = [("name",""), ("phone","📞"), ("address","📍"), ("emergency_phone","🆘")]
+            if not embassy.get("emergency_phone"):
+                embassy_fields.append(("emergency","🆘"))
+            for field, icon in embassy_fields:
                 if embassy.get(field):
                     blocks.append(self._paragraph(f"{icon} {embassy[field]}"))
             if embassy.get("website"):
-                blocks.append(self._paragraph(f"🌐 [대사관 웹사이트]({embassy['website']})"))
+                blocks.append(self._paragraph(f"🌐 [재외공관 웹사이트]({embassy['website']})"))
         blocks.append(self._divider())
 
         # ── FAQ (Featured Snippets) ──
